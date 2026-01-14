@@ -78,7 +78,21 @@ Connector styles:
 ### Key Implementation Details
 
 1. **ID Management**: Sequential ID generation starting from 2 (0 and 1 are reserved for root cells)
+
 2. **XML Escaping**: All user text is properly escaped to prevent XML injection
+
 3. **File Validation**: Ensures .drawio extension on file creation
+
 4. **Directory Creation**: Automatically creates parent directories as needed
+
 5. **Error Handling**: All tool calls wrapped in try-catch with proper error responses
+
+6. **Path Resolution** (`resolvePath` method):
+   - **Platform-Specific Translation**: On macOS, automatically translates `/home/claude/` paths to the user's actual home directory (e.g., `/home/claude/diagram.drawio` → `/Users/username/diagram.drawio`)
+   - **Tilde Expansion**: Converts `~` to the user's home directory using `os.homedir()`
+   - **Relative Path Resolution**: Converts relative paths to absolute paths based on `process.cwd()`
+   - **Path Normalization**: Uses `path.normalize()` to standardize path separators
+   - **Safety Validation**: Prevents file creation in system directories (`/usr`, `/bin`, `/sbin`, `/etc`, `/var`, `/root`)
+   - **Cross-Platform Support**: Works on macOS, Linux, and Windows with platform-specific handling
+
+   This feature is critical for Claude Desktop integration, as Claude may suggest paths like `/home/claude/` that don't exist on macOS systems.
