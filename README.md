@@ -9,6 +9,8 @@ A Model Context Protocol (MCP) server that enables Claude to create and manipula
 - Add connectors/arrows between shapes
 - Customize colors, positions, and sizes
 - List and read existing diagrams
+- Intelligent path resolution (supports relative, absolute, and ~ paths)
+- Automatic path translation for cross-platform compatibility
 
 ## Installation
 
@@ -86,6 +88,33 @@ The MCP server provides the following tools:
 3. **add_connector** - Add connectors between shapes with different styles (straight, curved, orthogonal)
 4. **read_diagram** - Read the raw XML content of a diagram
 5. **list_shapes** - List all shapes in a diagram with their properties
+
+## Path Handling
+
+The server intelligently handles file paths across different platforms:
+
+### Supported Path Formats
+
+- **Relative paths**: `diagram.drawio` or `./diagrams/flowchart.drawio`
+  - Resolved relative to the current working directory
+
+- **Absolute paths**: `/Users/username/Documents/diagram.drawio`
+  - Used as-is (validated for safety)
+
+- **Home directory**: `~/Documents/diagram.drawio`
+  - Expands `~` to your home directory
+
+### Automatic Path Translation (macOS)
+
+When Claude Desktop suggests paths like `/home/claude/diagram.drawio` on macOS, the server automatically translates them to your actual home directory:
+- `/home/claude/diagram.drawio` → `/Users/yourusername/diagram.drawio`
+- `/home/claude/Documents/test.drawio` → `/Users/yourusername/Documents/test.drawio`
+
+This ensures seamless operation without manual path adjustments.
+
+### Safety Features
+
+The server prevents file creation in system directories (`/usr`, `/bin`, `/etc`, etc.) to protect your system.
 
 ## Development
 
