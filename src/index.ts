@@ -250,22 +250,31 @@ class DrawioMCPServer {
   }
 
   private resolvePath(filepath: string): string {
-    // Translate /home/claude paths to actual user home directory
+    const desktopPath = path.join(os.homedir(), "Desktop");
+
+    // Translate /home/claude paths to Desktop
     // This handles cases where Claude Desktop suggests /home/claude on macOS
     if (filepath.startsWith("/home/claude/")) {
-      filepath = path.join(os.homedir(), filepath.slice("/home/claude/".length));
+      const filename = filepath.slice("/home/claude/".length);
+      // Only use the filename, ignore any subdirectories
+      const basename = path.basename(filename);
+      filepath = path.join(desktopPath, basename);
     } else if (filepath === "/home/claude") {
+      filepath = desktopPath;
+    }
+
+    // Expand ~ to home directory (keep user's specified path if they use ~)
+    if (filepath.startsWith("~/")) {
+      filepath = path.join(os.homedir(), filepath.slice(2));
+    } else if (filepath === "~") {
       filepath = os.homedir();
     }
 
-    // Expand ~ to home directory
-    if (filepath.startsWith("~")) {
-      filepath = path.join(os.homedir(), filepath.slice(1));
-    }
-
-    // Convert relative paths to absolute paths based on current working directory
+    // Convert relative paths to Desktop (instead of cwd)
+    // This makes it very clear where files are being saved
     if (!path.isAbsolute(filepath)) {
-      filepath = path.resolve(process.cwd(), filepath);
+      const basename = path.basename(filepath);
+      filepath = path.join(desktopPath, basename);
     }
 
     // Validate the path is reasonable (not trying to create system directories)
@@ -277,7 +286,7 @@ class DrawioMCPServer {
       for (const prefix of invalidPrefixes) {
         if (normalizedPath.startsWith(prefix)) {
           throw new Error(
-            `Cannot create files in system directory: ${normalizedPath}. Please use a path in your home directory or current working directory.`
+            `Cannot create files in system directory: ${normalizedPath}. Please use a path in your home directory or Desktop.`
           );
         }
       }
@@ -337,11 +346,16 @@ class DrawioMCPServer {
     await fs.mkdir(path.dirname(resolvedPath), { recursive: true });
     await fs.writeFile(resolvedPath, diagram, "utf-8");
 
+    // Make it very clear where the file was saved (user's machine, not Claude's)
+    const locationHint = resolvedPath.includes("/Desktop/")
+      ? " (saved to your Desktop)"
+      : "";
+
     return {
       content: [
         {
           type: "text",
-          text: `Created diagram at ${resolvedPath}`,
+          text: `Created diagram at: ${resolvedPath}${locationHint}\n\nThis file is on YOUR computer and can be opened with Draw.io (https://app.diagrams.net)`,
         },
       ],
     };

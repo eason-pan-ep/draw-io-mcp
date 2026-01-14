@@ -91,26 +91,36 @@ The MCP server provides the following tools:
 
 ## Path Handling
 
-The server intelligently handles file paths across different platforms:
+**All diagrams are saved to your Desktop by default** to make it easy to find them. The server intelligently handles file paths across different platforms:
+
+### Default Behavior
+
+- **Simple filenames**: `diagram.drawio` → Saved to your Desktop
+- **Relative paths**: `./flowchart.drawio` → Saved to your Desktop (subdirectories ignored)
+- **Claude-suggested paths**: `/home/claude/test.drawio` → Saved to your Desktop
+
+This makes it crystal clear where your files are - they're always on **YOUR computer's Desktop**, not on any remote machine.
 
 ### Supported Path Formats
 
-- **Relative paths**: `diagram.drawio` or `./diagrams/flowchart.drawio`
-  - Resolved relative to the current working directory
+- **Desktop (default)**: `diagram.drawio`
+  - Saved to `~/Desktop/diagram.drawio`
 
 - **Absolute paths**: `/Users/username/Documents/diagram.drawio`
   - Used as-is (validated for safety)
+  - Lets you save to specific locations if needed
 
-- **Home directory**: `~/Documents/diagram.drawio`
-  - Expands `~` to your home directory
+- **Home directory subdirectories**: `~/Documents/diagram.drawio`
+  - Expands `~` and saves to the specified location
+  - Useful for organizing diagrams in specific folders
 
-### Automatic Path Translation (macOS)
+### Automatic Path Translation
 
-When Claude Desktop suggests paths like `/home/claude/diagram.drawio` on macOS, the server automatically translates them to your actual home directory:
-- `/home/claude/diagram.drawio` → `/Users/yourusername/diagram.drawio`
-- `/home/claude/Documents/test.drawio` → `/Users/yourusername/Documents/test.drawio`
+When Claude Desktop suggests paths like `/home/claude/diagram.drawio`, the server automatically translates them to your Desktop:
+- `/home/claude/diagram.drawio` → `~/Desktop/diagram.drawio`
+- `/home/claude/subfolder/test.drawio` → `~/Desktop/test.drawio`
 
-This ensures seamless operation without manual path adjustments.
+This ensures you always know where your files are saved.
 
 ### Safety Features
 
