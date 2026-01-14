@@ -8,6 +8,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs/promises";
 import * as path from "path";
+import * as os from "os";
 
 interface Shape {
   id: string;
@@ -248,6 +249,43 @@ class DrawioMCPServer {
     });
   }
 
+  private resolvePath(filepath: string): string {
+    // Translate /home/claude paths to actual user home directory
+    // This handles cases where Claude Desktop suggests /home/claude on macOS
+    if (filepath.startsWith("/home/claude/")) {
+      filepath = path.join(os.homedir(), filepath.slice("/home/claude/".length));
+    } else if (filepath === "/home/claude") {
+      filepath = os.homedir();
+    }
+
+    // Expand ~ to home directory
+    if (filepath.startsWith("~")) {
+      filepath = path.join(os.homedir(), filepath.slice(1));
+    }
+
+    // Convert relative paths to absolute paths based on current working directory
+    if (!path.isAbsolute(filepath)) {
+      filepath = path.resolve(process.cwd(), filepath);
+    }
+
+    // Validate the path is reasonable (not trying to create system directories)
+    const normalizedPath = path.normalize(filepath);
+
+    // Prevent creation in dangerous system directories on Unix-like systems
+    if (process.platform !== "win32") {
+      const invalidPrefixes = ["/usr", "/bin", "/sbin", "/etc", "/var", "/root"];
+      for (const prefix of invalidPrefixes) {
+        if (normalizedPath.startsWith(prefix)) {
+          throw new Error(
+            `Cannot create files in system directory: ${normalizedPath}. Please use a path in your home directory or current working directory.`
+          );
+        }
+      }
+    }
+
+    return normalizedPath;
+  }
+
   private getShapeStyle(shapeType: string, fillColor = "#dae8fc", strokeColor = "#6c8ebf"): string {
     const baseStyles: Record<string, string> = {
       rectangle: "rounded=0",
@@ -282,6 +320,9 @@ class DrawioMCPServer {
       throw new Error("Filepath must end with .drawio");
     }
 
+    // Resolve the filepath to absolute path and validate it
+    const resolvedPath = this.resolvePath(filepath);
+
     const diagram = `<mxfile host="app.diagrams.net" modified="${new Date().toISOString()}" agent="draw-io-mcp" version="1.0.0" type="device">
   <diagram name="${this.escapeXml(title)}" id="diagram1">
     <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
@@ -293,14 +334,14 @@ class DrawioMCPServer {
   </diagram>
 </mxfile>`;
 
-    await fs.mkdir(path.dirname(filepath), { recursive: true });
-    await fs.writeFile(filepath, diagram, "utf-8");
+    await fs.mkdir(path.dirname(resolvedPath), { recursive: true });
+    await fs.writeFile(resolvedPath, diagram, "utf-8");
 
     return {
       content: [
         {
           type: "text",
-          text: `Created diagram at ${filepath}`,
+          text: `Created diagram at ${resolvedPath}`,
         },
       ],
     };
@@ -317,7 +358,8 @@ class DrawioMCPServer {
     fillColor = "#dae8fc",
     strokeColor = "#6c8ebf"
   ) {
-    const content = await fs.readFile(filepath, "utf-8");
+    const resolvedPath = this.resolvePath(filepath);
+    const content = await fs.readFile(resolvedPath, "utf-8");
     const shapeId = `shape_${this.nextId++}`;
     const style = this.getShapeStyle(shapeType, fillColor, strokeColor);
 
@@ -330,7 +372,7 @@ class DrawioMCPServer {
       `${shapeXml}\n      </root>`
     );
 
-    await fs.writeFile(filepath, updatedContent, "utf-8");
+    await fs.writeFile(resolvedPath, updatedContent, "utf-8");
 
     return {
       content: [
@@ -349,7 +391,8 @@ class DrawioMCPServer {
     label = "",
     style = "orthogonal"
   ) {
-    const content = await fs.readFile(filepath, "utf-8");
+    const resolvedPath = this.resolvePath(filepath);
+    const content = await fs.readFile(resolvedPath, "utf-8");
     const connectorId = `connector_${this.nextId++}`;
     const connectorStyle = this.getConnectorStyle(style);
 
@@ -362,7 +405,7 @@ class DrawioMCPServer {
       `${connectorXml}\n      </root>`
     );
 
-    await fs.writeFile(filepath, updatedContent, "utf-8");
+    await fs.writeFile(resolvedPath, updatedContent, "utf-8");
 
     return {
       content: [
@@ -375,7 +418,8 @@ class DrawioMCPServer {
   }
 
   private async readDiagram(filepath: string) {
-    const content = await fs.readFile(filepath, "utf-8");
+    const resolvedPath = this.resolvePath(filepath);
+    const content = await fs.readFile(resolvedPath, "utf-8");
 
     return {
       content: [
@@ -388,7 +432,8 @@ class DrawioMCPServer {
   }
 
   private async listShapes(filepath: string) {
-    const content = await fs.readFile(filepath, "utf-8");
+    const resolvedPath = this.resolvePath(filepath);
+    const content = await fs.readFile(resolvedPath, "utf-8");
     const shapes: Array<{ id: string; type: string; text: string; position: string }> = [];
 
     const cellRegex = /<mxCell[^>]*id="([^"]*)"[^>]*value="([^"]*)"[^>]*style="([^"]*)"[^>]*vertex="1"[^>]*>[\s\S]*?<mxGeometry[^>]*x="([^"]*)"[^>]*y="([^"]*)"[^>]*\/>/g;
