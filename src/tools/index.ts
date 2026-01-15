@@ -3,6 +3,7 @@ import { addShapeTool, addShape } from "./add-shape.js";
 import { addConnectorTool, addConnector } from "./add-connector.js";
 import { readDiagramTool, readDiagram } from "./read-diagram.js";
 import { listShapesTool, listShapes } from "./list-shapes.js";
+import { autoLayoutTool, autoLayout } from "./auto-layout.js";
 
 /**
  * Registry of all available tools with their definitions and handlers.
@@ -27,6 +28,10 @@ export const toolRegistry = {
   list_shapes: {
     definition: listShapesTool,
     handler: listShapes,
+  },
+  auto_layout: {
+    definition: autoLayoutTool,
+    handler: autoLayout,
   },
 };
 
@@ -86,6 +91,15 @@ export async function executeTool(name: string, args: any) {
 
     case "list_shapes":
       return await listShapes(args.filepath);
+
+    case "auto_layout":
+      return await autoLayout(
+        args.filepath,
+        args.layout,
+        args.spacing,
+        args.startX,
+        args.startY
+      );
 
     default:
       return {
