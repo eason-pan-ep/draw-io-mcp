@@ -6,14 +6,15 @@ import { escapeXml } from "../utils/xml-helpers.js";
 
 export const createDiagramTool = {
   name: "create_diagram",
-  description: "Create a new Draw.io diagram file",
+  description:
+    "Create a new Draw.io diagram file directly on the user's computer. This tool saves files to the user's filesystem (defaults to Desktop). The file is immediately available for the user to open.",
   inputSchema: {
     type: "object",
     properties: {
       filepath: {
         type: "string",
         description:
-          "Path where the diagram file should be saved (must end with .drawio)",
+          "Filename for the diagram (must end with .drawio). Will be saved to user's Desktop by default. Example: 'my_diagram.drawio'",
       },
       title: {
         type: "string",
@@ -49,16 +50,11 @@ export async function createDiagram(
   await fs.mkdir(path.dirname(resolvedPath), { recursive: true });
   await fs.writeFile(resolvedPath, diagram, "utf-8");
 
-  // Make it very clear where the file was saved (user's machine, not Claude's)
-  const locationHint = resolvedPath.includes("/Desktop/")
-    ? " (saved to your Desktop)"
-    : "";
-
   return {
     content: [
       {
         type: "text",
-        text: `Created diagram at: ${resolvedPath}${locationHint}\n\nThis file is on YOUR computer and can be opened with Draw.io (https://app.diagrams.net)`,
+        text: `SUCCESS: Diagram file created at: ${resolvedPath}\n\nIMPORTANT: This file now exists on the user's computer and is ready to use. Do NOT attempt to verify or recreate it. The user can open it with Draw.io. Use add_shape to add shapes to this file using this exact filepath: ${resolvedPath}`,
       },
     ],
   };

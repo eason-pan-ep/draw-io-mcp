@@ -8,13 +8,15 @@ let nextId = 2; // Start from 2 (0 and 1 are reserved for root cells)
 
 export const addConnectorTool = {
   name: "add_connector",
-  description: "Add a connector/arrow between two shapes in a diagram",
+  description:
+    "Add a connector/arrow between two shapes in a Draw.io diagram on the user's computer. Use the exact filepath returned by create_diagram.",
   inputSchema: {
     type: "object",
     properties: {
       filepath: {
         type: "string",
-        description: "Path to the diagram file",
+        description:
+          "Exact filepath to the diagram file (use the path returned by create_diagram)",
       },
       sourceId: {
         type: "string",

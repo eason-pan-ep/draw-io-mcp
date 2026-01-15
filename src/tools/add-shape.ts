@@ -8,13 +8,15 @@ let nextId = 2; // Start from 2 (0 and 1 are reserved for root cells)
 
 export const addShapeTool = {
   name: "add_shape",
-  description: "Add a shape (rectangle, ellipse, etc.) to a diagram",
+  description:
+    "Add a shape to an existing Draw.io diagram on the user's computer. Use the exact filepath returned by create_diagram. Supports multi-line text using newline characters (\\n).",
   inputSchema: {
     type: "object",
     properties: {
       filepath: {
         type: "string",
-        description: "Path to the diagram file",
+        description:
+          "Exact filepath to the diagram file (use the path returned by create_diagram)",
       },
       shapeType: {
         type: "string",
@@ -35,7 +37,8 @@ export const addShapeTool = {
       },
       text: {
         type: "string",
-        description: "Text to display in the shape",
+        description:
+          "Text to display in the shape. Use \\n for line breaks (e.g., 'ClassName\\n---\\n+ method(): void')",
       },
       x: {
         type: "number",

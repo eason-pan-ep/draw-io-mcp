@@ -7,6 +7,7 @@ A Model Context Protocol (MCP) server that enables Claude to create and manipula
 - Create new Draw.io diagram files
 - Add various shapes (rectangles, ellipses, rhombus, cylinders, hexagons, clouds, etc.)
 - Add connectors/arrows between shapes
+- **Multi-line text support** - Use `\n` for line breaks in shape labels (great for class diagrams)
 - Customize colors, positions, and sizes
 - List and read existing diagrams
 - Intelligent path resolution (supports relative, absolute, and ~ paths)
@@ -79,12 +80,33 @@ Create a system architecture diagram at ./architecture.drawio showing:
 - Connect them appropriately
 ```
 
+### Example 3: Class Diagram with Multi-line Text
+```
+Create a class diagram for a Vehicle hierarchy with:
+- A Vehicle class with attributes (brand, model) and methods (start, stop)
+- A Car subclass with numDoors attribute
+- A Motorcycle subclass with engineCC attribute
+Use \n for line breaks to separate class name, attributes, and methods
+```
+
+The `\n` in shape text creates proper line breaks, so text like:
+```
+Vehicle\n---\n- brand: String\n+ start(): void
+```
+Renders as:
+```
+Vehicle
+---
+- brand: String
++ start(): void
+```
+
 ## Available Tools
 
 The MCP server provides the following tools:
 
 1. **create_diagram** - Create a new Draw.io diagram file
-2. **add_shape** - Add shapes (rectangle, ellipse, rhombus, cylinder, hexagon, cloud, step, parallelogram, trapezoid, triangle)
+2. **add_shape** - Add shapes (rectangle, ellipse, rhombus, cylinder, hexagon, cloud, step, parallelogram, trapezoid, triangle). Supports multi-line text with `\n`
 3. **add_connector** - Add connectors between shapes with different styles (straight, curved, orthogonal)
 4. **read_diagram** - Read the raw XML content of a diagram
 5. **list_shapes** - List all shapes in a diagram with their properties
