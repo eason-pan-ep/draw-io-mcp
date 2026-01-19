@@ -3,13 +3,14 @@ import type { ToolResponse, ShapeType } from "../types.js";
 import { resolvePath } from "../utils/path-resolver.js";
 import { escapeXml } from "../utils/xml-helpers.js";
 import { getShapeStyle } from "../utils/style-generator.js";
+import { calculateShapeDimensions } from "../utils/text-sizing.js";
 
 let nextId = 2; // Start from 2 (0 and 1 are reserved for root cells)
 
 export const addShapeTool = {
   name: "add_shape",
   description:
-    "Add a shape to an existing Draw.io diagram on the user's computer. Use the exact filepath returned by create_diagram. Supports multi-line text using newline characters (\\n).",
+    "Add a shape to an existing Draw.io diagram on the user's computer. Use the exact filepath returned by create_diagram. Supports multi-line text using newline characters (\\n). Shape dimensions are automatically calculated to fit the text content if not explicitly provided.",
   inputSchema: {
     type: "object",
     properties: {
@@ -50,11 +51,11 @@ export const addShapeTool = {
       },
       width: {
         type: "number",
-        description: "Width of the shape (default: 120)",
+        description: "Width of the shape (auto-calculated to fit text if not provided)",
       },
       height: {
         type: "number",
-        description: "Height of the shape (default: 60)",
+        description: "Height of the shape (auto-calculated to fit text if not provided)",
       },
       fillColor: {
         type: "string",
@@ -76,8 +77,8 @@ export async function addShape(
   text: string,
   x = 100,
   y = 100,
-  width = 120,
-  height = 60,
+  width?: number,
+  height?: number,
   fillColor = "#dae8fc",
   strokeColor = "#6c8ebf"
 ): Promise<ToolResponse> {
@@ -86,8 +87,13 @@ export async function addShape(
   const shapeId = `shape_${nextId++}`;
   const style = getShapeStyle(shapeType, fillColor, strokeColor);
 
+  // Auto-calculate dimensions based on text content if not provided
+  const dimensions = calculateShapeDimensions(text, width, height);
+  const finalWidth = dimensions.width;
+  const finalHeight = dimensions.height;
+
   const shapeXml = `        <mxCell id="${shapeId}" value="${escapeXml(text)}" style="${style}" vertex="1" parent="1">
-          <mxGeometry x="${x}" y="${y}" width="${width}" height="${height}" as="geometry" />
+          <mxGeometry x="${x}" y="${y}" width="${finalWidth}" height="${finalHeight}" as="geometry" />
         </mxCell>`;
 
   const updatedContent = content.replace(
@@ -101,7 +107,7 @@ export async function addShape(
     content: [
       {
         type: "text",
-        text: `Added ${shapeType} shape with ID: ${shapeId} at position (${x}, ${y})`,
+        text: `Added ${shapeType} shape with ID: ${shapeId} at position (${x}, ${y}) with dimensions ${finalWidth}x${finalHeight}`,
       },
     ],
   };

@@ -1,6 +1,6 @@
 {
   "name": "draw-io-mcp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "MCP server for creating and manipulating Draw.io diagrams",
   "type": "module",
   "main": "dist/index.js",
@@ -9,7 +9,11 @@
     "watch": "tsc --watch",
     "prepare": "npm run build"
   },
-  "keywords": ["mcp", "drawio", "diagrams"],
+  "keywords": [
+    "mcp",
+    "drawio",
+    "diagrams"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
