@@ -88,7 +88,7 @@ export async function addShape(
   const style = getShapeStyle(shapeType, fillColor, strokeColor);
 
   // Auto-calculate dimensions based on text content if not provided
-  const dimensions = calculateShapeDimensions(text, width, height);
+  const dimensions = calculateShapeDimensions(text, width, height, shapeType);
   const finalWidth = dimensions.width;
   const finalHeight = dimensions.height;
 

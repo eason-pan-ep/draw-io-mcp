@@ -23,7 +23,7 @@ export const autoLayoutTool = {
       },
       spacing: {
         type: "number",
-        description: "Space between shapes in pixels (default: 50)",
+        description: "Space between shapes in pixels (default: 80)",
       },
       startX: {
         type: "number",
@@ -43,7 +43,7 @@ export type LayoutType = "grid" | "flowchart-vertical" | "flowchart-horizontal";
 export async function autoLayout(
   filepath: string,
   layout: LayoutType,
-  spacing = 50,
+  spacing = 80,
   startX = 50,
   startY = 50
 ): Promise<ToolResponse> {
