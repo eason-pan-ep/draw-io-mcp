@@ -110,25 +110,43 @@ export function parseDiagram(content: string): DiagramGraph {
 }
 
 /**
- * Update shape positions in the XML content
+ * Update shape positions (and optionally dimensions) in the XML content.
+ * When width/height are present in an entry they are written to the geometry
+ * element as well, which lets layout algorithms enforce uniform row/column sizes.
  */
 export function updateShapePositions(
   content: string,
-  newPositions: Map<string, { x: number; y: number }>
+  newPositions: Map<string, { x: number; y: number; width?: number; height?: number }>
 ): string {
   let updatedContent = content;
 
   for (const [id, pos] of newPositions) {
-    // Match the mxCell with this ID and its geometry
-    const cellRegex = new RegExp(
+    // Update x and y
+    const posRegex = new RegExp(
       `(<mxCell[^>]*id="${id}"[^>]*>[\\s\\S]*?<mxGeometry[^>]*)x="[^"]*"([^>]*)y="[^"]*"`,
       "g"
     );
-
     updatedContent = updatedContent.replace(
-      cellRegex,
+      posRegex,
       `$1x="${pos.x}"$2y="${pos.y}"`
     );
+
+    // Update width and height when provided
+    if (pos.width !== undefined) {
+      const widthRegex = new RegExp(
+        `(<mxCell[^>]*id="${id}"[^>]*>[\\s\\S]*?<mxGeometry[^>]*)width="[^"]*"`,
+        "g"
+      );
+      updatedContent = updatedContent.replace(widthRegex, `$1width="${pos.width}"`);
+    }
+
+    if (pos.height !== undefined) {
+      const heightRegex = new RegExp(
+        `(<mxCell[^>]*id="${id}"[^>]*>[\\s\\S]*?<mxGeometry[^>]*)height="[^"]*"`,
+        "g"
+      );
+      updatedContent = updatedContent.replace(heightRegex, `$1height="${pos.height}"`);
+    }
   }
 
   return updatedContent;

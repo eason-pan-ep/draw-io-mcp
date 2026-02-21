@@ -10,7 +10,7 @@ export interface LayoutOptions {
   startY: number;
 }
 
-export type LayoutResult = Map<string, { x: number; y: number }>;
+export type LayoutResult = Map<string, { x: number; y: number; width?: number; height?: number }>;
 
 /**
  * Grid Layout: Arrange shapes in a grid pattern
@@ -58,7 +58,9 @@ export function gridLayout(
     rowOffsets[r] = rowOffsets[r - 1] + rowHeights[r - 1] + spacing;
   }
 
-  // Position shapes in grid
+  // Position shapes in grid, and enforce uniform row height / column width
+  // so every cell in the same row is the same height and every cell in the
+  // same column is the same width (matching the tallest/widest peer).
   shapes.forEach((shape, index) => {
     const row = Math.floor(index / columns);
     const col = index % columns;
@@ -66,6 +68,8 @@ export function gridLayout(
     positions.set(shape.id, {
       x: startX + colOffsets[col],
       y: startY + rowOffsets[row],
+      width: colWidths[col],
+      height: rowHeights[row],
     });
   });
 
@@ -252,6 +256,11 @@ export function flowchartLayout(
     const groupCrossExtent = group.length * (crossSize + effectiveSpacing) - effectiveSpacing;
     const mainOffset = levelMainOffset.get(level) ?? 0;
 
+    // All shapes in the same level share the same main-axis size so they
+    // align neatly (uniform row height for vertical, uniform column width
+    // for horizontal).
+    const uniformMainSize = levelMainSize.get(level) ?? 0;
+
     group.forEach((shape, index) => {
       if (direction === "vertical") {
         // Center the group horizontally
@@ -259,6 +268,8 @@ export function flowchartLayout(
         positions.set(shape.id, {
           x: groupStartX + index * (crossSize + effectiveSpacing),
           y: startY + mainOffset,
+          width: crossSize,
+          height: uniformMainSize,
         });
       } else {
         // Center the group vertically
@@ -266,6 +277,8 @@ export function flowchartLayout(
         positions.set(shape.id, {
           x: startX + mainOffset,
           y: groupStartY + index * (crossSize + effectiveSpacing),
+          width: uniformMainSize,
+          height: crossSize,
         });
       }
     });
