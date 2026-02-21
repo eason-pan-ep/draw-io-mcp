@@ -34,13 +34,28 @@ export function gridLayout(
 
   // Calculate optimal columns (roughly square grid)
   const columns = Math.ceil(Math.sqrt(shapes.length));
+  const rows = Math.ceil(shapes.length / columns);
 
-  // Find max dimensions for uniform spacing
-  let maxWidth = 0;
-  let maxHeight = 0;
-  for (const shape of shapes) {
-    maxWidth = Math.max(maxWidth, shape.width);
-    maxHeight = Math.max(maxHeight, shape.height);
+  // Calculate per-column widths and per-row heights so shapes of different
+  // sizes never overlap regardless of content length.
+  const colWidths: number[] = new Array(columns).fill(0);
+  const rowHeights: number[] = new Array(rows).fill(0);
+
+  shapes.forEach((shape, index) => {
+    const row = Math.floor(index / columns);
+    const col = index % columns;
+    colWidths[col] = Math.max(colWidths[col], shape.width);
+    rowHeights[row] = Math.max(rowHeights[row], shape.height);
+  });
+
+  // Build cumulative offsets for each column and row
+  const colOffsets: number[] = new Array(columns).fill(0);
+  for (let c = 1; c < columns; c++) {
+    colOffsets[c] = colOffsets[c - 1] + colWidths[c - 1] + spacing;
+  }
+  const rowOffsets: number[] = new Array(rows).fill(0);
+  for (let r = 1; r < rows; r++) {
+    rowOffsets[r] = rowOffsets[r - 1] + rowHeights[r - 1] + spacing;
   }
 
   // Position shapes in grid
@@ -49,8 +64,8 @@ export function gridLayout(
     const col = index % columns;
 
     positions.set(shape.id, {
-      x: startX + col * (maxWidth + spacing),
-      y: startY + row * (maxHeight + spacing),
+      x: startX + colOffsets[col],
+      y: startY + rowOffsets[row],
     });
   });
 
@@ -188,60 +203,69 @@ export function flowchartLayout(
   // Step 5: Calculate positions
   const sortedLevels = Array.from(levelGroups.keys()).sort((a, b) => a - b);
 
-  // Find max dimensions
-  let maxWidth = 0;
-  let maxHeight = 0;
-  for (const shape of shapes.values()) {
-    maxWidth = Math.max(maxWidth, shape.width);
-    maxHeight = Math.max(maxHeight, shape.height);
-  }
-
   // Find the maximum number of shapes at any level (widest level)
-  // Use this to scale horizontal spacing so connectors can route around shapes
+  // Use this to scale cross-axis spacing so connectors can route around shapes
   let maxShapesAtLevel = 1;
   for (const group of levelGroups.values()) {
     maxShapesAtLevel = Math.max(maxShapesAtLevel, group.length);
   }
 
   // Increase spacing when there are parallel paths to give connectors room
-  // Add extra space proportional to the number of parallel shapes
   const parallelSpacingMultiplier = maxShapesAtLevel > 2 ? 1.5 : 1;
   const effectiveSpacing = spacing * parallelSpacingMultiplier;
-
-  // Also increase vertical spacing when there are many parallel paths
-  // This gives orthogonal connectors more room to route
   const verticalSpacingMultiplier = maxShapesAtLevel > 2 ? 1.3 : 1;
   const effectiveVerticalSpacing = spacing * verticalSpacingMultiplier;
 
+  // Per-level dimensions: each level's height/width is determined by the
+  // tallest/widest shape in that level. This guarantees no cross-level overlap.
+  const levelMainSize = new Map<number, number>(); // height (vertical) or width (horizontal)
+  const levelCrossSize = new Map<number, number>(); // width (vertical) or height (horizontal)
   for (const level of sortedLevels) {
     const group = levelGroups.get(level)!;
-    const groupWidth = group.length * (maxWidth + effectiveSpacing) - effectiveSpacing;
+    let mainMax = 0;
+    let crossMax = 0;
+    for (const shape of group) {
+      if (direction === "vertical") {
+        mainMax = Math.max(mainMax, shape.height);
+        crossMax = Math.max(crossMax, shape.width);
+      } else {
+        mainMax = Math.max(mainMax, shape.width);
+        crossMax = Math.max(crossMax, shape.height);
+      }
+    }
+    levelMainSize.set(level, mainMax);
+    levelCrossSize.set(level, crossMax);
+  }
+
+  // Build cumulative main-axis offsets so each level starts after the
+  // previous one's tallest/widest shape plus spacing.
+  const levelMainOffset = new Map<number, number>();
+  let cumulativeMain = 0;
+  for (const level of sortedLevels) {
+    levelMainOffset.set(level, cumulativeMain);
+    cumulativeMain += (levelMainSize.get(level) ?? 0) + effectiveVerticalSpacing;
+  }
+
+  for (const level of sortedLevels) {
+    const group = levelGroups.get(level)!;
+    const crossSize = levelCrossSize.get(level) ?? 0;
+    const groupCrossExtent = group.length * (crossSize + effectiveSpacing) - effectiveSpacing;
+    const mainOffset = levelMainOffset.get(level) ?? 0;
 
     group.forEach((shape, index) => {
-      // For parallel paths (3+ shapes at same level), stagger vertically
-      // Outer shapes are higher, middle shapes are lower
-      // This helps orthogonal connectors route around shapes when converging
-      let staggerOffset = 0;
-      if (group.length >= 3) {
-        const middleIndex = (group.length - 1) / 2;
-        const distanceFromMiddle = Math.abs(index - middleIndex);
-        // Outer shapes get negative offset (higher up), middle stays at base level
-        staggerOffset = (middleIndex - distanceFromMiddle) * (maxHeight * 0.4);
-      }
-
       if (direction === "vertical") {
         // Center the group horizontally
-        const groupStartX = startX + (groupWidth > 0 ? -groupWidth / 2 + maxWidth / 2 : 0);
+        const groupStartX = startX + (groupCrossExtent > 0 ? -groupCrossExtent / 2 + crossSize / 2 : 0);
         positions.set(shape.id, {
-          x: groupStartX + index * (maxWidth + effectiveSpacing),
-          y: startY + level * (maxHeight + effectiveVerticalSpacing) + staggerOffset,
+          x: groupStartX + index * (crossSize + effectiveSpacing),
+          y: startY + mainOffset,
         });
       } else {
         // Center the group vertically
-        const groupStartY = startY + (groupWidth > 0 ? -groupWidth / 2 + maxHeight / 2 : 0);
+        const groupStartY = startY + (groupCrossExtent > 0 ? -groupCrossExtent / 2 + crossSize / 2 : 0);
         positions.set(shape.id, {
-          x: startX + level * (maxWidth + effectiveVerticalSpacing) + staggerOffset,
-          y: groupStartY + index * (maxHeight + effectiveSpacing),
+          x: startX + mainOffset,
+          y: groupStartY + index * (crossSize + effectiveSpacing),
         });
       }
     });

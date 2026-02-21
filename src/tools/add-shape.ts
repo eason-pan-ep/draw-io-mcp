@@ -103,11 +103,16 @@ export async function addShape(
 
   await fs.writeFile(resolvedPath, updatedContent, "utf-8");
 
+  // Recommended gap between shapes so callers can easily position the next shape
+  const GAP = 30;
+  const nextRight = x + finalWidth + GAP;
+  const nextBelow = y + finalHeight + GAP;
+
   return {
     content: [
       {
         type: "text",
-        text: `Added ${shapeType} shape with ID: ${shapeId} at position (${x}, ${y}) with dimensions ${finalWidth}x${finalHeight}`,
+        text: `Added ${shapeType} shape with ID: ${shapeId} at position (${x}, ${y}) with dimensions ${finalWidth}x${finalHeight}. Next shape positions (with ${GAP}px gap): right → x=${nextRight}, y=${y} | below → x=${x}, y=${nextBelow}`,
       },
     ],
   };

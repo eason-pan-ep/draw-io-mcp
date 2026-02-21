@@ -4,13 +4,18 @@
 
 import type { ShapeType } from "../types.js";
 
-// Approximate character width in pixels (based on default Draw.io font)
-const CHAR_WIDTH = 8;
-// Line height in pixels
-const LINE_HEIGHT = 22;
-// Padding inside shapes (horizontal and vertical)
-const HORIZONTAL_PADDING = 20;
-const VERTICAL_PADDING = 28;
+// Character width in pixels for 12px sans-serif (Draw.io default).
+// 7.5px is a slightly conservative average for mixed-case English text;
+// combined with HORIZONTAL_PADDING it prevents overflow without making shapes excessively wide.
+const CHAR_WIDTH = 7.5;
+// Line height in pixels (22px is conservative for 12px font; errs on the side of more space)
+const LINE_HEIGHT = 24;
+// Shape border → text area gaps.
+// spacingLeft=8 + spacingRight=8 (set in style-generator.ts) consume 16px of horizontal width.
+// spacingTop=6 + spacingBottom=6 consume 12px of vertical height.
+// These constants must be at least that large plus a comfortable buffer.
+const HORIZONTAL_PADDING = 40; // 16px consumed by spacing + 24px true buffer
+const VERTICAL_PADDING = 60;   // 12px consumed by spacing + 48px true buffer
 // Minimum dimensions
 const MIN_WIDTH = 80;
 const MIN_HEIGHT = 40;
@@ -21,16 +26,16 @@ const MIN_HEIGHT = 40;
  * Non-rectangular shapes lose area to curves and angles.
  */
 const SHAPE_PADDING_MULTIPLIER: Record<ShapeType, number> = {
-    rectangle: 1.0,
-    step: 1.0,
-    parallelogram: 1.0,
-    trapezoid: 1.0,
-    cylinder: 1.3,
-    hexagon: 1.5,
-    triangle: 1.5,
-    ellipse: 1.6,
-    cloud: 1.6,
-    rhombus: 1.8,
+    rectangle: 1.5,    // 50% height buffer for dense text content
+    step: 1.5,
+    parallelogram: 1.5,
+    trapezoid: 1.5,
+    cylinder: 1.4,
+    hexagon: 1.6,
+    triangle: 1.6,
+    ellipse: 1.7,
+    cloud: 1.7,
+    rhombus: 1.9,
 };
 
 /**
@@ -44,7 +49,7 @@ const SHAPE_PADDING_MULTIPLIER: Record<ShapeType, number> = {
  */
 export function calculateTextDimensions(
     text: string,
-    maxWidth = 200,
+    maxWidth = 320,
     shapeType?: ShapeType
 ): { width: number; height: number } {
     // Normalize newlines: handle both literal \n strings and actual newline characters
