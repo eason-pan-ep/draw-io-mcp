@@ -22,7 +22,7 @@ export function getShapeStyle(
   };
 
   const baseStyle = baseStyles[shapeType] || "rounded=0";
-  return `${baseStyle};whiteSpace=wrap;html=1;fillColor=${fillColor};strokeColor=${strokeColor};`;
+  return `${baseStyle};whiteSpace=wrap;html=1;fillColor=${fillColor};strokeColor=${strokeColor};fontSize=12;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;`;
 }
 
 /**
