@@ -58,6 +58,65 @@ Replace `/absolute/path/to/draw-io-mcp` with the actual path to this project dir
 
 After adding the configuration, restart Claude Desktop.
 
+## Configuration for Claude Code
+
+To use this MCP server with [Claude Code](https://claude.ai/code) (the CLI), add it via the `claude mcp add` command or by editing the config file directly.
+
+### Option 1: CLI (recommended)
+
+```bash
+claude mcp add draw-io node /absolute/path/to/draw-io-mcp/dist/index.js
+```
+
+Replace `/absolute/path/to/draw-io-mcp` with the actual path to this project directory.
+
+### Option 2: Edit the config file directly
+
+Claude Code stores MCP configuration in `~/.claude/mcp.json` (global) or `.claude/mcp.json` inside a project (project-scoped). Add the following entry:
+
+```json
+{
+  "mcpServers": {
+    "draw-io": {
+      "command": "node",
+      "args": ["/absolute/path/to/draw-io-mcp/dist/index.js"]
+    }
+  }
+}
+```
+
+### Verify the server is running
+
+After adding the configuration, start or restart Claude Code and run:
+
+```bash
+claude mcp list
+```
+
+You should see `draw-io` listed as a connected server. You can also run:
+
+```bash
+claude mcp get draw-io
+```
+
+to inspect its status and the tools it exposes.
+
+### Scope options
+
+Claude Code supports three configuration scopes:
+
+| Scope | Flag | Config location | When to use |
+|---|---|---|---|
+| Local (project-only) | `--scope local` | `.claude/mcp.json` in project | Diagrams for a specific repo |
+| User (global) | `--scope user` | `~/.claude/mcp.json` | Available in all your projects |
+| Project (shared) | `--scope project` | `.mcp.json` in project root | Shared with teammates via git |
+
+Example to add with a specific scope:
+
+```bash
+claude mcp add --scope user draw-io node /absolute/path/to/draw-io-mcp/dist/index.js
+```
+
 ## Usage Examples
 
 Once configured, you can ask Claude to create diagrams:
