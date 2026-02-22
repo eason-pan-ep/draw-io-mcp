@@ -1,6 +1,6 @@
 {
   "name": "draw-io-mcp",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "MCP server for creating and manipulating Draw.io diagrams",
   "type": "module",
   "main": "dist/index.js",
