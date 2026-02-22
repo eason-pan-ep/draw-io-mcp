@@ -14,8 +14,8 @@ const LINE_HEIGHT = 24;
 // spacingLeft=8 + spacingRight=8 (set in style-generator.ts) consume 16px of horizontal width.
 // spacingTop=6 + spacingBottom=6 consume 12px of vertical height.
 // These constants must be at least that large plus a comfortable buffer.
-const HORIZONTAL_PADDING = 40; // 16px consumed by spacing + 24px true buffer
-const VERTICAL_PADDING = 60;   // 12px consumed by spacing + 48px true buffer
+const HORIZONTAL_PADDING = 52; // 16px consumed by spacing + 36px true buffer
+const VERTICAL_PADDING = 36;   // 12px consumed by spacing + 24px true buffer
 // Minimum dimensions
 const MIN_WIDTH = 80;
 const MIN_HEIGHT = 40;
@@ -26,16 +26,16 @@ const MIN_HEIGHT = 40;
  * Non-rectangular shapes lose area to curves and angles.
  */
 const SHAPE_PADDING_MULTIPLIER: Record<ShapeType, number> = {
-    rectangle: 1.5,    // 50% height buffer for dense text content
-    step: 1.5,
-    parallelogram: 1.5,
-    trapezoid: 1.5,
-    cylinder: 1.4,
-    hexagon: 1.6,
-    triangle: 1.6,
-    ellipse: 1.7,
-    cloud: 1.7,
-    rhombus: 1.9,
+    rectangle: 1.1,    // Small buffer for text rendering variance
+    step: 1.15,        // Slight offset from step cutout
+    parallelogram: 1.2,
+    trapezoid: 1.2,
+    cylinder: 1.35,    // Top cap reduces usable area
+    hexagon: 1.35,
+    triangle: 1.6,     // Only ~60% of bbox is usable
+    ellipse: 1.4,      // Inscribed rectangle is ~70% of bbox
+    cloud: 1.5,
+    rhombus: 1.8,      // Inscribed rectangle is ~50% of bbox
 };
 
 /**

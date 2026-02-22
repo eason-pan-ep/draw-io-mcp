@@ -22,7 +22,14 @@ export function getShapeStyle(
   };
 
   const baseStyle = baseStyles[shapeType] || "rounded=0";
-  return `${baseStyle};whiteSpace=wrap;html=1;fillColor=${fillColor};strokeColor=${strokeColor};fontSize=12;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;`;
+
+  // Shapes where text should be centered (non-rectangular geometry)
+  const centeredShapes: Set<ShapeType> = new Set(["rhombus", "ellipse", "cloud", "triangle"]);
+  const isCentered = centeredShapes.has(shapeType);
+  const align = isCentered ? "center" : "left";
+  const verticalAlign = isCentered ? "middle" : "top";
+
+  return `${baseStyle};whiteSpace=wrap;html=1;fillColor=${fillColor};strokeColor=${strokeColor};fontSize=12;align=${align};verticalAlign=${verticalAlign};spacingLeft=8;spacingRight=8;spacingTop=6;spacingBottom=6;`;
 }
 
 /**
