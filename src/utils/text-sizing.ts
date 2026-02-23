@@ -15,7 +15,7 @@ const LINE_HEIGHT = 24;
 // spacingTop=6 + spacingBottom=6 consume 12px of vertical height.
 // These constants must be at least that large plus a comfortable buffer.
 const HORIZONTAL_PADDING = 52; // 16px consumed by spacing + 36px true buffer
-const VERTICAL_PADDING = 36;   // 12px consumed by spacing + 24px true buffer
+const VERTICAL_PADDING = 28;   // 12px consumed by spacing + 16px true buffer
 // Minimum dimensions
 const MIN_WIDTH = 80;
 const MIN_HEIGHT = 40;
@@ -26,12 +26,12 @@ const MIN_HEIGHT = 40;
  * Non-rectangular shapes lose area to curves and angles.
  */
 const SHAPE_PADDING_MULTIPLIER: Record<ShapeType, number> = {
-    rectangle: 1.1,    // Small buffer for text rendering variance
-    step: 1.15,        // Slight offset from step cutout
-    parallelogram: 1.2,
-    trapezoid: 1.2,
-    cylinder: 1.35,    // Top cap reduces usable area
-    hexagon: 1.35,
+    rectangle: 1.05,   // Small buffer for text rendering variance
+    step: 1.1,         // Slight offset from step cutout
+    parallelogram: 1.15,
+    trapezoid: 1.15,
+    cylinder: 1.3,     // Top cap reduces usable area
+    hexagon: 1.3,
     triangle: 1.6,     // Only ~60% of bbox is usable
     ellipse: 1.4,      // Inscribed rectangle is ~70% of bbox
     cloud: 1.5,
